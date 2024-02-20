@@ -5,12 +5,14 @@ use std::{
 };
 use ncurses::{*};
 mod game;
-use game::{Game, Config};
+use game::Game;
+mod config;
+use config::Config;
 
 fn main() {
     // Start ncurses.
     let screen = initscr();
-    clear();
+    clear();   
     refresh();
     noecho();
     // Main game Loop
