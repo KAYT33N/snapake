@@ -193,7 +193,87 @@ impl Game{
 
     // games logic
     pub fn tick(&mut self, input: char){
-        unimplemented!();
+        // React to input
+        match input {
+            'q' => {
+                self.is_playing = false;
+            },
+            'w' => {
+                self.move_player_if_possible(0, -1);
+            },
+            'a' => {
+                self.move_player_if_possible(-1, 0);
+            },
+            's' => {
+                self.move_player_if_possible(0, 1);
+            },
+            'd' => {
+                self.move_player_if_possible(1, 0);
+            },
+            _ => {
+                // Silence is gold
+            }
+        }
+        // get rng
+        let mut rng = rand::thread_rng();
+        // Move enemies
+        for enemy in &mut self.enemies {
+            // move verticaly towards player
+            if rng.gen::<f64>() < self.config.enemies_level {
+                if enemy.y > self.player.y {
+                    enemy.y -= 1;
+                }
+                if enemy.y < self.player.y {
+                    enemy.y += 1;
+                }
+            }
+            // move horizontaly towards player
+            if rng.gen::<f64>() < self.config.enemies_level {
+                if enemy.x > self.player.x {
+                    enemy.x -= 1;
+                }
+                if enemy.x < self.player.x {
+                    enemy.x += 1;
+                }
+            }
+        }
+        // Death check
+        let is_dead = self
+            .enemies.iter()
+            .position(|enemy| enemy == &self.player)
+            .is_some();
+        if is_dead {
+            self.tip = String::from("YOU ARE DEAD !");
+            self.is_playing = false;
+        }
+        // Eat check
+        let food_to_eat_index = self
+            .foods.iter()
+            .position(|food| food.pos == self.player);
+        if food_to_eat_index.is_some() {
+            self.foods[food_to_eat_index.unwrap()] 
+                = self.generate_food();
+            self.score += 10;
+            self.tip = String::from("ate food + 10");
+        }
+        // Move foods if expired
+        for i in 0..self.config.foods_count {
+            self.foods[i].age -= 1;
+            if self.foods[i].age < 5 {
+                self.foods[i] = self.generate_food();
+            }
+        }
+    }
+
+    // Moves player if there isnt stones
+    // Give delta move + 1 as arguments
+    fn move_player_if_possible(&mut self, dx: i32, dy: i32) {
+        let new_y = self.player.y + dy ;
+        let new_x = self.player.x + dx ;
+        if self.world[new_y as usize][new_x as usize] != Types::Stone {
+            self.player.x = new_x;
+            self.player.y = new_y;
+        }
     }
 
     // Draw frame in terminal
