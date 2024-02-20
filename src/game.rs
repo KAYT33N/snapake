@@ -1,12 +1,9 @@
-use rand::prelude::*;
-use ncurses::{
-    getmaxyx,
-    addstr,
-    addch,
-    wmove,
-    clear,
-    refresh
+use std::{
+    thread,
+    time
 };
+use rand::prelude::*;
+use ncurses::*;
 
 #[derive(Clone, Copy)]
 pub struct Config {
@@ -147,6 +144,9 @@ impl Game{
         while self.foods.len() != self.config.foods_count {
             self.foods.push(self.generate_food());
         }
+        // ready ncurses for playing
+        clear();
+        nodelay(self.screen, true);
     }
 
     fn generate_food(&self) -> Food {
@@ -326,5 +326,25 @@ impl Game{
             (self.maxx-1) as i32
         );
         refresh();
+    }
+
+    // starts game engine
+    // returns score when done
+    pub fn start(&mut self) -> usize{
+        // Calcs pause beetwen frames
+        let pause = 1000/(self.config.fps as u64);
+        // main engine loop
+        nodelay(self.screen, true);
+        while self.is_playing {
+            // Pass pressed key to game to proccess what to do
+            // move/reset/quit
+            self.tick(Into::<char>::into(getch() as u8));
+            // Render to terminal
+            self.render();
+            // Apply FPS limit
+            thread::sleep(time::Duration::from_millis(pause));
+        }
+        nodelay(self.screen, false);
+        self.score.clone()
     }
 }
