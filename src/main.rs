@@ -4,8 +4,8 @@ use std::{
     time
 };
 use ncurses::{*};
-mod world;
-use world::{Point, World};
+mod game;
+use game::{Game, Config};
 
 fn main() {
     // Start ncurses.
@@ -13,46 +13,36 @@ fn main() {
     clear();
     refresh();
     noecho();
-    cbreak();
-    nodelay(screen, true);
-    // Get max col & row number
-    let mut maxx : i32 = 0;
-    let mut maxy : i32 = 0;
-    getmaxyx(screen, &mut maxy, &mut maxx);
     // Main game Loop
+    let mut best_score = 0;
+    // holds last config in case of restarting game
+    let mut last_config : Option<Config> = None;
     loop {
-        // Creates new world
-        let world = World::new(
-            // Pass maximum x & y
-            Point{
-                x: maxx as usize, 
-                y: maxy as usize
-            },
-            // Number of foods
-            5, 
-            // Number of enemies
-            3, 
-            // Chance of turning a space into stone
-            0.03
-        );
-        // Limit FPS
-        let fps = 10;
-        let pause = 1000/fps;
-        // A Round's loop
-        while world.is_playing {
-            // Pass pressed key to world to proccess what to do
+        nodelay(screen, false);
+        // Creates new game and returns Game
+        let mut game = Game::new(screen, last_config);
+        // Limit fps
+        let pause = 1000/(game.config.fps as u64);
+        // A Round's loop for generating frames
+        clear();
+        nodelay(screen, true);
+        while game.is_playing {
+            // Pass pressed key to game to proccess what to do
             // move/reset/quit
-            world.tick(Into::<char>::into(getch() as u8));
+            game.tick(Into::<char>::into(getch() as u8));
             // Render to terminal
-            world.render(screen);
+            game.render();
             // Apply FPS limit
             thread::sleep(time::Duration::from_millis(pause));
         }
-        // Show results
-        // world.res();
+        // Show results and returns round score
+        // TODO .. 
+        // wait for user input
+        nodelay(screen, false);
         if Into::<char>::into(getch() as u8) == 'q' {
             break;
         }
+        last_config = Some(game.config.clone());
     }
     /* Terminate ncurses. */
     endwin();
