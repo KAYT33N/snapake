@@ -195,8 +195,56 @@ impl Game{
     pub fn tick(&mut self, input: char){
         unimplemented!();
     }
+
     // Draw frame in terminal
     pub fn render(&self) {
-        unimplemented!();
+        // Draw stones
+        for i in 0..self.maxy {
+            for j in 0..self.maxx {
+                wmove(self.screen, i as i32, j as i32);
+                addch(self.world[i][j].into());
+            }
+        }
+        // Draw Tips
+        wmove(self.screen, (self.maxy-2) as i32, 1);
+        addstr(
+            format!(
+                "  {}  |  Score :  {}  ",
+                self.tip,
+                self.score
+             ).as_str()
+         );
+        // Draw enemies
+        for enemy in &self.enemies {
+            wmove(
+                self.screen, 
+                enemy.y, 
+                enemy.x
+            );
+            addch(Types::Enemy.into());
+        }
+        // Draw foods
+        for food in &self.foods {
+            wmove(
+                self.screen, 
+                food.pos.y, 
+                food.pos.x
+            );
+            addch(Types::Food.into());
+        }
+        // Draw player
+        wmove(
+            self.screen, 
+            self.player.y as i32, 
+            self.player.x as i32
+        );
+        addch(Types::Player.into());
+        // Render
+        wmove(
+            self.screen,
+            (self.maxy-1) as i32,
+            (self.maxx-1) as i32
+        );
+        refresh();
     }
 }
