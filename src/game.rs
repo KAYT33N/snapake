@@ -59,8 +59,8 @@ pub struct Game {
 impl Game{
     // creates 
     pub fn new(
-        screen      : ncurses::WINDOW, 
-        last_config : Option<Config>
+        screen  : ncurses::WINDOW, 
+        config  : Config
       ) -> Self {
             // get max x & y
             let mut maxx : i32 = 0;
@@ -69,7 +69,7 @@ impl Game{
             // create empty game
             let mut tmp = Self{
                 is_playing  : true,
-                config      : Config::get_config(last_config, screen),
+                config      : config,
                 screen      : screen,
                 maxx        : maxx as usize,
                 maxy        : maxy as usize,

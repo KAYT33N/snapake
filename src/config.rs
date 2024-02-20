@@ -17,11 +17,12 @@ pub struct Config {
 impl Config{
 
     // Shows user graphical screen to change values
-    pub fn get_config(
-        last_config: Option<Config>, 
-        screen: ncurses::WINDOW
-    ) -> Config {
-
+    pub fn get_config_interactive(
+        last_config : Option<Config>, 
+        screen      : ncurses::WINDOW,
+        best_score  : usize,
+        score       : Option<usize>
+    ) -> Option<Config> {
         let defaults = Config {
             enemies_count: 3,
             foods_count  : 5,
@@ -33,10 +34,17 @@ impl Config{
         };
         let mut configs = last_config.unwrap_or(defaults);
         nodelay(screen, false);
-        let mut focus = 1;
+        let mut focus = 0;
         loop{
             // print menu
-            Self::print_configs_menu(screen, focus, configs);
+            Self::print_configs_menu(
+                screen, 
+                focus, 
+                configs, 
+                best_score, 
+                score
+              );
+            // Handle actions
             match Into::<char>::into(getch() as u8) {
                 'w' => {
                     if focus > 1 {
@@ -56,7 +64,8 @@ impl Config{
                     5 => {configs.foods_min_age -= 1},
                     6 => {configs.foods_max_age -= 1},
                     7 => {configs.fps           -= 1},
-                    _ => {break;},
+                    8 => {break;},
+                    _ => {},
                 },
                 'd' => match focus {
                     1 => {configs.enemies_count += 1},
@@ -66,45 +75,60 @@ impl Config{
                     5 => {configs.foods_min_age += 1},
                     6 => {configs.foods_max_age += 1},
                     7 => {configs.fps           += 1},
-                    _ => {break;},
+                    8 => {break;},
+                    _ => {},
                 },
                 'q' => {
-                    break;
+                    return None;
                 },
                 _ => {
                     // Nothing to do
                 }
             }
         }
-        configs
+        Some(configs)
 }
 
 fn print_configs_menu(
-        screen: ncurses::WINDOW, 
-        focus: i32, 
-        configs: Config
+        screen      : ncurses::WINDOW, 
+        focus       : i32, 
+        configs     : Config,
+        best_score  : usize,
+        score       : Option<usize>
     ) {
         let base : i32 = 1;
         clear();
-        wmove(screen, base+0, 0);
+        let mut current = base;
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
-                "  /---------------SNAPAKE---------------\\ "
+                "   /--------------SNAPAKE--------------\\ "
             ).as_str()
         );
-        wmove(screen, base+1, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
-                " /----------Use `wasd` amd `q`-----------\\"
+                "  /---------Use `wasd` to move----------\\"
             ).as_str()
         );
-        wmove(screen, base+2, 0);
+        current += 1;
+        wmove(screen, current, 0);
+        addstr(
+            format!(
+                " /----------Press `q`  to exit-----------\\"
+            ).as_str()
+        );
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |>-------------------------------------<|"
             ).as_str()
         );
-        wmove(screen, base+3, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}number of enemies \t\t: {:03}  {}|",
@@ -113,7 +137,8 @@ fn print_configs_menu(
                 if focus == 1 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+4, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}number of foods \t\t: {:03}  {}|",
@@ -122,7 +147,8 @@ fn print_configs_menu(
                 if focus == 2 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+5, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}stones density \t\t: {:0.02} {}|",
@@ -131,7 +157,8 @@ fn print_configs_menu(
                 if focus == 3 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+6, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}enemies intelligence \t: {:0.02} {}|",
@@ -140,7 +167,8 @@ fn print_configs_menu(
                 if focus == 4 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+7, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}foods minimum age in (s) \t: {:03}  {}|",
@@ -149,7 +177,8 @@ fn print_configs_menu(
                 if focus == 5 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+8, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}foods maximum age in (s) \t: {:03}  {}|",
@@ -158,7 +187,8 @@ fn print_configs_menu(
                 if focus == 6 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+9, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
                 " |{}frames per second\t\t: {:03}  {}|",
@@ -167,14 +197,54 @@ fn print_configs_menu(
                 if focus == 7 {"<-"} else {"  "},
             ).as_str()
         );
-        wmove(screen, base+10, 0);
+        current += 1;
+        wmove(screen, current, 0);
         addstr(
             format!(
-                " \\ {0} Confirm {0} /",
+                " | {0} Confirm {0} |",
                 if focus == 8 {"~~~~~~~~~~~~~~"} else {"              "},
             ).as_str()
         );
-        wmove(screen, base+2+focus, 0);
+        current += 1;
+        wmove(screen, current, 0);
+        addstr(
+            format!(
+                " \\-------+------------------------------/",
+            ).as_str()
+        );
+        if score.is_some() {
+            let score = score.unwrap();
+            if score == best_score {
+                current += 1;
+                wmove(screen, current, 0);
+                addstr(
+                    format!(
+                        "         | New HIGHSCORE : {}",
+                        score
+                    ).as_str()
+                );
+            }else{
+                current += 1;
+                wmove(screen, current, 0);
+                addstr(
+                    format!(
+                        "           | Highscore : {}",
+                        best_score
+                    ).as_str()
+                );
+                current += 1;
+                wmove(screen, current, 0);
+                addstr(
+                    format!(
+                        "           | Your score : {}",
+                        score
+                    ).as_str()
+                );
+
+            }
+        }
+        // set curser to focused line
+        wmove(screen, base+4+focus, 0);
         refresh();
     }
 }
