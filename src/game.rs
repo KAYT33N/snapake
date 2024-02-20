@@ -98,7 +98,7 @@ impl Game{
                 tip         : String::from("Press `q` to exit  |  use 'wasd' to move")
             };
             // fill it
-            // tmp.init();
+            tmp.init();
             // return game
             tmp
     }
@@ -116,4 +116,87 @@ impl Game{
         }
     }
 
+    // Adds player, enemies, foods to game
+    fn init(&mut self) {
+        // get rng
+        let mut rng = rand::thread_rng();
+        println!("making stones");
+        // generate stones
+        for i in 0..self.maxy{
+            self.world.push(Vec::new());
+            for j in 0..self.maxx{
+                if 
+                    rng.gen::<f64>() < self.config.stones_chance
+                    || i == 0          || j == 0
+                    || i > self.maxy-4 || j == self.maxx-1
+                {
+                    self.world[i].push(Types::Stone);
+                }else{
+                    self.world[i].push(Types::Empty);
+                }
+            }
+        }
+        // born player
+        self.player = self.gen_rand_point();
+        // spawn enemies
+        while self.enemies.len() != self.config.enemies_count {
+            let tmp_point = self.gen_rand_point();
+            self.enemies.push(tmp_point);
+        }
+        // place foods
+        while self.foods.len() != self.config.foods_count {
+            self.foods.push(self.generate_food());
+        }
+    }
+
+    fn generate_food(&self) -> Food {
+        let mut rng = rand::thread_rng();
+        let fps = self.config.fps;
+        let foods_min_age = self.config.foods_min_age;
+        let foods_max_age = self.config.foods_max_age;
+        let foods_age_range_in_ticks = 
+            (foods_min_age*fps)..=(foods_max_age*fps);
+        let tmp_pos = self.gen_rand_point();
+        let tmp_age = rng.gen_range(foods_age_range_in_ticks.clone()); 
+        Food{
+            pos: tmp_pos,
+            age: tmp_age
+        }
+    }
+
+    // Generates a random point until it finds an empty one
+    fn gen_rand_point(&self) -> Point {
+        let mut rng = rand::thread_rng();
+        let mut x = rng.gen_range(0..self.maxx);
+        let mut y = rng.gen_range(0..self.maxy);
+        while 
+            self.world[y][x] != Types::Empty
+            || self
+                .enemies
+                .iter()
+                .position(|item| item.x == x as i32 && item.y == y as i32)
+                .is_some()
+            || self
+                .foods
+                .iter()
+                .position(|item| item.pos.x == x as i32 && item.pos.y == y as i32)
+                .is_some()
+            {
+            x = rng.gen_range(0..self.maxx);
+            y = rng.gen_range(0..self.maxy);
+        }
+        Point{
+            x: x as i32,
+            y: y as i32
+        }
+    }
+
+    // games logic
+    pub fn tick(&mut self, input: char){
+        unimplemented!();
+    }
+    // Draw frame in terminal
+    pub fn render(&self) {
+        unimplemented!();
+    }
 }
