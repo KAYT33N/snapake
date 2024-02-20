@@ -20,7 +20,31 @@ fn main() {
     loop {
         // Creates new game and returns Game
         let mut game = Game::new(screen, last_config);
-        best_score = best_score.max(game.start());
+        // runs game and returns result
+        let score = game.start();
+        // render results
+        clear();
+        if score > best_score {
+            wmove(screen, 2, 0);
+            addstr(format!("\tNew HIGHSCORE : {}", score).as_str());
+            best_score = score;
+        }else{
+            wmove(screen, 2, 0);
+            addstr(format!("\tBetter luck next time !").as_str());
+            wmove(screen, 3, 0);
+            addstr(format!("\thighscore  : {}", best_score).as_str());
+            wmove(screen, 4, 0);
+            addstr(format!("\tyour score : {}", score).as_str());
+        }
+        wmove(screen, 6, 0);
+        addstr("\tPress `q` to exit");
+        wmove(screen, 7, 0);
+        addstr("\tOr press any other key to restart game");
+        refresh();
+        // Tries to prevent misclicks
+        nodelay(screen, true);
+        thread::sleep(time::Duration::from_millis(1000));
+        let _ignore_this_input = getch();
         // wait for user input
         nodelay(screen, false);
         if Into::<char>::into(getch() as u8) == 'q' {
