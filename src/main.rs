@@ -36,7 +36,7 @@ fn main() {
         thread::sleep(time::Duration::from_millis(1500));
         // renders results and returns configs
         config = Config::get_config_interactive(
-                None,
+                Some(game.config),
                 screen,
                 best_score,
                 Some(score)
