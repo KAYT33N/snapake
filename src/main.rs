@@ -8,6 +8,7 @@ mod game;
 use game::Game;
 mod config;
 use config::Config;
+mod inputs;
 
 fn main() {
     // Start ncurses.
