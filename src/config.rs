@@ -1,4 +1,5 @@
 use ncurses::*;
+use crate::inputs::Inputs;
 
 #[derive(Clone, Copy)]
 pub struct Config {
@@ -45,18 +46,19 @@ impl Config{
                 score
               );
             // Handle actions
-            match Into::<char>::into(getch() as u8) {
-                'w' => {
+            // i32 to u8 to char to Inputs
+            match char::from(getch() as u8).into() {
+                Inputs::Up => {
                     if focus > 1 {
                         focus -= 1;
                     }
                 },
-                's' => {
+                Inputs::Down => {
                     if focus < 8 {
                         focus += 1;
                     }
                 },
-                'a' => match focus {
+                Inputs::Left => match focus {
                     1 => {configs.enemies_count -= 1},
                     2 => {configs.foods_count   -= 1},
                     3 => {configs.stones_chance -= 0.01},
@@ -67,7 +69,7 @@ impl Config{
                     8 => {break;},
                     _ => {},
                 },
-                'd' => match focus {
+                Inputs::Right => match focus {
                     1 => {configs.enemies_count += 1},
                     2 => {configs.foods_count   += 1},
                     3 => {configs.stones_chance += 0.01},
@@ -78,7 +80,7 @@ impl Config{
                     8 => {break;},
                     _ => {},
                 },
-                'q' => {
+                Inputs::Esc => {
                     return None;
                 },
                 _ => {

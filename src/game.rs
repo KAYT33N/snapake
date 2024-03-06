@@ -5,6 +5,7 @@ use std::{
 use rand::prelude::*;
 use ncurses::*;
 use crate::config::Config;
+use crate::inputs::Inputs;
 
 // This is used to store player, enemies, foods Location
 #[derive(Debug, PartialEq)]
@@ -167,20 +168,20 @@ impl Game{
     // games logic
     pub fn tick(&mut self, input: char){
         // React to input
-        match input {
-            'q' => {
+        match input.into() {
+            Inputs::Esc => {
                 self.is_playing = false;
             },
-            'w' => {
+            Inputs::Up => {
                 self.move_player_if_possible(0, -1);
             },
-            'a' => {
+            Inputs::Left => {
                 self.move_player_if_possible(-1, 0);
             },
-            's' => {
+            Inputs::Down => {
                 self.move_player_if_possible(0, 1);
             },
-            'd' => {
+            Inputs::Right => {
                 self.move_player_if_possible(1, 0);
             },
             _ => {
